@@ -70,9 +70,7 @@
         .form { display: none; }
         .form.active { display: block; }
 
-        .input-group {
-            margin-bottom: 16px;
-        }
+        .input-group { margin-bottom: 16px; }
 
         .input-group label {
             display: block;
@@ -95,9 +93,7 @@
             transition: border 0.3s;
         }
 
-        .input-group input:focus {
-            border-color: #FFB400;
-        }
+        .input-group input:focus { border-color: #FFB400; }
 
         .btn {
             width: 100%;
@@ -201,14 +197,15 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-                const data = await res.json();
                 if (res.ok) {
+                    const data = await res.json();
                     msg.className = 'msg success';
                     msg.textContent = '¡Bienvenido ' + data.nombre + '! Saldo: $' + data.saldo;
                     setTimeout(() => window.location.href = '/partidos.html', 1500);
                 } else {
+                    const text = await res.text();
                     msg.className = 'msg error';
-                    msg.textContent = data;
+                    msg.textContent = text;
                 }
             } catch (e) {
                 msg.className = 'msg error';
@@ -227,14 +224,15 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nombre, email, password })
                 });
-                const data = await res.json();
                 if (res.ok) {
+                    const data = await res.json();
                     msg.className = 'msg success';
                     msg.textContent = '¡Cuenta creada! Bienvenido ' + data.nombre;
                     setTimeout(() => window.location.href = '/partidos.html', 1500);
                 } else {
+                    const text = await res.text();
                     msg.className = 'msg error';
-                    msg.textContent = data;
+                    msg.textContent = text;
                 }
             } catch (e) {
                 msg.className = 'msg error';
