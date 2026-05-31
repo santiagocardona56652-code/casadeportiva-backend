@@ -26,6 +26,12 @@ public class Partido {
     @Column
     private String competicion;
 
+    @Column
+    private Integer golesLocal = 0;
+
+    @Column
+    private Integer golesVisitante = 0;
+
     // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -44,4 +50,10 @@ public class Partido {
 
     public String getCompeticion() { return competicion; }
     public void setCompeticion(String competicion) { this.competicion = competicion; }
+
+    public Integer getGolesLocal() { return golesLocal; }
+    public void setGolesLocal(Integer golesLocal) { this.golesLocal = golesLocal; }
+
+    public Integer getGolesVisitante() { return golesVisitante; }
+    public void setGolesVisitante(Integer golesVisitante) { this.golesVisitante = golesVisitante; }
 }

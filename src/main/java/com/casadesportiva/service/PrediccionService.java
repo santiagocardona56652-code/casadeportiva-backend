@@ -52,7 +52,7 @@ public class PrediccionService {
 
     private String llamarGemini(Partido partido) {
         try {
-            String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + geminiApiKey;
+            String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
 
             String prompt = String.format(
                 "Eres un analista experto en futbol. Analiza este partido:\n" +
@@ -84,6 +84,7 @@ public class PrediccionService {
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-goog-api-key", geminiApiKey);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);

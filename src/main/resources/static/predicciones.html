@@ -84,7 +84,6 @@
         }
         .btn-prediccion:hover { background: #FFB400; color: #000; }
 
-        /* MODAL */
         .modal {
             display: none;
             position: fixed;
@@ -138,8 +137,8 @@
             font-size: 14px;
             line-height: 1.8;
             color: #e0e0e0;
-            white-space: pre-wrap;
         }
+        .prediccion-texto strong { color: #FFB400; }
         .btn-cerrar {
             width: 100%;
             background: #222;
@@ -180,7 +179,6 @@
 
 <div class="partidos-lista" id="partidos"></div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
     <div class="modal-content">
         <div class="modal-title" id="modalTitulo"></div>
@@ -224,8 +222,13 @@
             const res = await fetch(`/api/predicciones/${id}`);
             const data = await res.json();
             if (res.ok && data.texto && !data.texto.startsWith('Error')) {
+                const textoFormateado = data.texto
+                    .replace(/### (.*?)(\n|$)/g, '<br><strong>$1</strong><br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                    .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                    .replace(/\n/g, '<br>');
                 document.getElementById('modalContenido').innerHTML =
-                    `<div class="prediccion-texto">${data.texto}</div>`;
+                    `<div class="prediccion-texto">${textoFormateado}</div>`;
             } else {
                 document.getElementById('modalContenido').innerHTML =
                     `<div class="prediccion-texto" style="color:#f44336;">

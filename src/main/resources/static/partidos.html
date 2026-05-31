@@ -21,6 +21,8 @@
             display: flex;
             gap: 10px;
             padding: 20px 30px;
+            flex-wrap: wrap;
+            align-items: center;
         }
         .filtro-btn {
             padding: 8px 20px;
@@ -38,6 +40,11 @@
             border-color: #FFB400;
             font-weight: 600;
         }
+        .ultimo-update {
+            margin-left: auto;
+            font-size: 11px;
+            color: #555;
+        }
 
         .partidos-grid {
             display: grid;
@@ -54,6 +61,7 @@
             transition: transform 0.2s;
         }
         .partido-card:hover { transform: translateY(-3px); border-color: #FFB400; }
+        .partido-card.en-vivo { border-color: #4caf50; box-shadow: 0 0 12px rgba(76,175,80,0.2); }
 
         .competicion {
             font-size: 11px;
@@ -67,10 +75,32 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
         }
         .equipo { font-size: 16px; font-weight: 600; text-align: center; flex: 1; }
-        .vs { color: #555; font-size: 13px; margin: 0 10px; }
+
+        .marcador {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .goles {
+            font-size: 28px;
+            font-weight: 800;
+            color: #FFB400;
+        }
+        .marcador-sep {
+            font-size: 20px;
+            color: #555;
+        }
+        .marcador-pendiente {
+            font-size: 13px;
+            color: #555;
+            text-align: center;
+            margin-bottom: 12px;
+        }
 
         .estado {
             display: inline-block;
@@ -81,8 +111,13 @@
             margin-bottom: 12px;
         }
         .PENDIENTE { background: #1a3a5c; color: #4fc3f7; }
-        .EN_VIVO { background: #1a3a1a; color: #4caf50; }
+        .EN_VIVO { background: #1a3a1a; color: #4caf50; animation: blink 1.5s infinite; }
         .FINALIZADO { background: #2a2a2a; color: #999; }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
 
         .fecha { font-size: 12px; color: #666; margin-bottom: 14px; }
 
@@ -118,6 +153,7 @@
     <button class="filtro-btn" onclick="filtrar('PENDIENTE', this)">Próximos</button>
     <button class="filtro-btn" onclick="filtrar('EN_VIVO', this)">🔴 En Vivo</button>
     <button class="filtro-btn" onclick="filtrar('FINALIZADO', this)">Finalizados</button>
+    <span class="ultimo-update" id="ultimoUpdate"></span>
 </div>
 
 <div class="partidos-grid" id="partidos"></div>
@@ -155,34 +191,57 @@
 <script>
     let todosLosPartidos = [];
     let partidoSeleccionado = null;
+    let filtroActual = 'TODOS';
 
     async function cargarPartidos() {
         const res = await fetch('/api/partidos');
         todosLosPartidos = await res.json();
-        mostrarPartidos(todosLosPartidos);
+        const ahora = new Date().toLocaleTimeString('es-CO');
+        document.getElementById('ultimoUpdate').textContent = '🔄 Actualizado: ' + ahora;
+        aplicarFiltro();
+    }
+
+    function aplicarFiltro() {
+        if (filtroActual === 'TODOS') mostrarPartidos(todosLosPartidos);
+        else mostrarPartidos(todosLosPartidos.filter(p => p.estado === filtroActual));
     }
 
     function mostrarPartidos(partidos) {
         const container = document.getElementById('partidos');
         container.innerHTML = '';
+        if (partidos.length === 0) {
+            container.innerHTML = '<p style="color:#555; padding:20px;">No hay partidos en esta categoría.</p>';
+            return;
+        }
         partidos.forEach(p => {
             const fecha = new Date(p.fecha).toLocaleDateString('es-CO', {
                 weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
             });
             const puedaApostar = p.estado === 'PENDIENTE';
+            const enVivo = p.estado === 'EN_VIVO';
+            const finalizado = p.estado === 'FINALIZADO';
+
+            const marcadorHTML = (enVivo || finalizado)
+                ? `<div class="marcador">
+                        <span class="goles">${p.golesLocal ?? 0}</span>
+                        <span class="marcador-sep">-</span>
+                        <span class="goles">${p.golesVisitante ?? 0}</span>
+                   </div>`
+                : `<div class="marcador-pendiente">⏰ Próximamente</div>`;
+
             container.innerHTML += `
-                <div class="partido-card">
+                <div class="partido-card ${enVivo ? 'en-vivo' : ''}">
                     <div class="competicion">${p.competicion}</div>
                     <div class="equipos">
                         <div class="equipo">${p.equipoLocal}</div>
-                        <div class="vs">VS</div>
                         <div class="equipo">${p.equipoVisitante}</div>
                     </div>
-                    <div><span class="estado ${p.estado}">${p.estado.replace('_', ' ')}</span></div>
+                    ${marcadorHTML}
+                    <div><span class="estado ${p.estado}">${enVivo ? '🔴 EN VIVO' : p.estado.replace('_', ' ')}</span></div>
                     <div class="fecha">📅 ${fecha}</div>
                     <button class="btn-apostar" ${!puedaApostar ? 'disabled' : ''}
                         onclick="apostar(${p.id}, '${p.equipoLocal}', '${p.equipoVisitante}')">
-                        ${puedaApostar ? '💰 Apostar' : 'No disponible'}
+                        ${puedaApostar ? '💰 Apostar' : enVivo ? '🔴 En curso' : '✅ Finalizado'}
                     </button>
                 </div>`;
         });
@@ -191,8 +250,8 @@
     function filtrar(estado, btn) {
         document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        if (estado === 'TODOS') mostrarPartidos(todosLosPartidos);
-        else mostrarPartidos(todosLosPartidos.filter(p => p.estado === estado));
+        filtroActual = estado;
+        aplicarFiltro();
     }
 
     function apostar(id, local, visitante) {
@@ -242,7 +301,9 @@
         }
     }
 
+    // Cargar al inicio y actualizar cada 60 segundos
     cargarPartidos();
+    setInterval(cargarPartidos, 60000);
 </script>
 </body>
 </html>
