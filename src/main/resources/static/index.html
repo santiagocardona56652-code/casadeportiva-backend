@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CasaDeportiva - Apuestas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0a0a0a;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .container {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 40px;
+            width: 400px;
+            box-shadow: 0 0 40px rgba(255, 180, 0, 0.1);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: #FFB400;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #222;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            color: #666;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: #FFB400;
+            border-bottom: 2px solid #FFB400;
+        }
+
+        .form { display: none; }
+        .form.active { display: block; }
+
+        .input-group { margin-bottom: 16px; }
+
+        .input-group label {
+            display: block;
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        .input-group input:focus { border-color: #FFB400; }
+        .input-group input.error-input { border-color: #f44336; }
+
+        .field-error {
+            color: #f44336;
+            font-size: 11px;
+            margin-top: 4px;
+            display: none;
+        }
+        .field-error.show { display: block; }
+
+        .password-hint {
+            color: #555;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .btn {
+            width: 100%;
+            background: #FFB400;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover { background: #e6a200; }
+
+        .msg {
+            margin-top: 14px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+        }
+
+        .msg.success { background: #1a3a1a; color: #4caf50; display: block; }
+        .msg.error { background: #3a1a1a; color: #f44336; display: block; }
+
+        .link-partidos {
+            color: #FFB400;
+            font-size: 13px;
+            text-decoration: none;
+            text-align: center;
+        }
+        .link-partidos:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>🏆 CasaDeportiva</h1>
+            <p>La mejor plataforma de apuestas</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('login')">Iniciar Sesión</div>
+            <div class="tab" onclick="switchTab('registro')">Registrarse</div>
+        </div>
+
+        <!-- LOGIN -->
+        <div class="form active" id="loginForm">
+            <div class="input-group">
+                <label>Correo electrónico</label>
+                <input type="email" id="loginEmail" placeholder="tu@email.com">
+                <span class="field-error" id="loginEmailError">Ingresa un correo válido (ej: nombre@gmail.com)</span>
+            </div>
+            <div class="input-group">
+                <label>Contraseña</label>
+                <input type="password" id="loginPassword" placeholder="••••••••">
+                <span class="field-error" id="loginPasswordError">Ingresa tu contraseña</span>
+            </div>
+            <button class="btn" onclick="login()">Entrar</button>
+            <div class="msg" id="loginMsg"></div>
+        </div>
+
+        <!-- REGISTRO -->
+        <div class="form" id="registroForm">
+            <div class="input-group">
+                <label>Nombre completo</label>
+                <input type="text" id="regNombre" placeholder="Tu nombre completo">
+                <span class="field-error" id="regNombreError">Solo letras y espacios, sin números ni caracteres especiales</span>
+            </div>
+            <div class="input-group">
+                <label>Correo electrónico</label>
+                <input type="email" id="regEmail" placeholder="tu@gmail.com">
+                <span class="field-error" id="regEmailError">Ingresa un correo válido (ej: nombre@gmail.com o nombre@hotmail.com)</span>
+            </div>
+            <div class="input-group">
+                <label>Contraseña</label>
+                <input type="password" id="regPassword" placeholder="••••••••">
+                <span class="field-error" id="regPasswordError">Mínimo 8 caracteres, una mayúscula, una minúscula y un carácter especial (!@#$%...)</span>
+                <span class="password-hint">Ej: MiClave#2026</span>
+            </div>
+            <button class="btn" onclick="registrar()">Crear cuenta</button>
+            <div class="msg" id="registroMsg"></div>
+        </div>
+    </div>
+
+    <a href="/partidos.html" class="link-partidos">🏟️ Ver partidos disponibles →</a>
+
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.form').forEach(f => f.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Form').classList.add('active');
+            // Limpiar errores al cambiar de tab
+            document.querySelectorAll('.field-error').forEach(e => e.classList.remove('show'));
+            document.querySelectorAll('input').forEach(i => i.classList.remove('error-input'));
+            document.querySelectorAll('.msg').forEach(m => m.className = 'msg');
+        }
+
+        // ── Validadores ──────────────────────────────────────────────
+        function validarEmail(email) {
+            // Debe tener formato correcto y dominio conocido
+            const regex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+            return regex.test(email.trim());
+        }
+
+        function validarNombre(nombre) {
+            // Solo letras (incluyendo acentos y ñ), espacios — sin números ni caracteres especiales
+            const regex = /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/;
+            return nombre.trim().length >= 2 && regex.test(nombre.trim());
+        }
+
+        function validarPassword(password) {
+            // Mínimo 8 chars, al menos 1 mayúscula, 1 minúscula, 1 carácter especial
+            const tieneMinuscula = /[a-z]/.test(password);
+            const tieneMayuscula = /[A-Z]/.test(password);
+            const tieneEspecial  = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+            const tieneMinLength = password.length >= 8;
+            return tieneMinuscula && tieneMayuscula && tieneEspecial && tieneMinLength;
+        }
+
+        function mostrarError(inputId, errorId, show) {
+            const input = document.getElementById(inputId);
+            const error = document.getElementById(errorId);
+            if (show) {
+                input.classList.add('error-input');
+                error.classList.add('show');
+            } else {
+                input.classList.remove('error-input');
+                error.classList.remove('show');
+            }
+            return !show;
+        }
+
+        // ── Login ────────────────────────────────────────────────────
+        async function login() {
+            const email    = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const msg      = document.getElementById('loginMsg');
+            msg.className  = 'msg';
+
+            let valido = true;
+            valido = mostrarError('loginEmail',    'loginEmailError',    !validarEmail(email))    && valido;
+            valido = mostrarError('loginPassword', 'loginPasswordError', password.length === 0)   && valido;
+            if (!valido) return;
+
+            try {
+                const res = await fetch('/api/usuarios/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    // Guardar token en sessionStorage
+                    sessionStorage.setItem('token', data.token);
+                    sessionStorage.setItem('usuarioId', data.usuarioId);
+                    sessionStorage.setItem('nombre', data.nombre);
+                    sessionStorage.setItem('saldo', data.saldo);
+                    msg.className = 'msg success';
+                    msg.textContent = '¡Bienvenido ' + data.nombre + '! Saldo: $' + data.saldo.toLocaleString('es-CO');
+                    setTimeout(() => window.location.href = '/partidos.html', 1500);
+                } else {
+                    const text = await res.text();
+                    msg.className = 'msg error';
+                    msg.textContent = text || 'Credenciales incorrectas';
+                }
+            } catch (e) {
+                msg.className = 'msg error';
+                msg.textContent = 'Error de conexión con el servidor';
+            }
+        }
+
+        // ── Registro ─────────────────────────────────────────────────
+        async function registrar() {
+            const nombre   = document.getElementById('regNombre').value.trim();
+            const email    = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const msg      = document.getElementById('registroMsg');
+            msg.className  = 'msg';
+
+            let valido = true;
+            valido = mostrarError('regNombre',   'regNombreError',   !validarNombre(nombre))   && valido;
+            valido = mostrarError('regEmail',    'regEmailError',    !validarEmail(email))      && valido;
+            valido = mostrarError('regPassword', 'regPasswordError', !validarPassword(password)) && valido;
+            if (!valido) return;
+
+            try {
+                const res = await fetch('/api/usuarios/registro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, email, password })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    sessionStorage.setItem('token', data.token);
+                    sessionStorage.setItem('usuarioId', data.usuarioId);
+                    sessionStorage.setItem('nombre', data.nombre);
+                    sessionStorage.setItem('saldo', data.saldo);
+                    msg.className = 'msg success';
+                    msg.textContent = '¡Cuenta creada! Bienvenido ' + data.nombre + ' 🎉';
+                    setTimeout(() => window.location.href = '/partidos.html', 1500);
+                } else {
+                    const text = await res.text();
+                    msg.className = 'msg error';
+                    msg.textContent = text || 'Error al crear la cuenta';
+                }
+            } catch (e) {
+                msg.className = 'msg error';
+                msg.textContent = 'Error de conexión con el servidor';
+            }
+        }
+
+        // Validar en tiempo real al escribir
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('regNombre').addEventListener('input', function() {
+                if (this.value.length > 0) mostrarError('regNombre', 'regNombreError', !validarNombre(this.value));
+            });
+            document.getElementById('regEmail').addEventListener('input', function() {
+                if (this.value.length > 0) mostrarError('regEmail', 'regEmailError', !validarEmail(this.value));
+            });
+            document.getElementById('regPassword').addEventListener('input', function() {
+                if (this.value.length > 0) mostrarError('regPassword', 'regPasswordError', !validarPassword(this.value));
+            });
+            document.getElementById('loginEmail').addEventListener('input', function() {
+                if (this.value.length > 0) mostrarError('loginEmail', 'loginEmailError', !validarEmail(this.value));
+            });
+        });
+    </script>
+</body>
+</html>

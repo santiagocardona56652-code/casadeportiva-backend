@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>CasaDeportiva - Predicciones IA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; font-family: 'Segoe UI', sans-serif; color: #fff; }
+
+        .navbar {
+            background: #111;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #FFB400;
+        }
+        .navbar h1 { color: #FFB400; font-size: 22px; }
+
+        .header-section {
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid #222;
+        }
+        .header-section h2 { color: #FFB400; font-size: 24px; margin-bottom: 8px; }
+        .header-section p { color: #666; font-size: 14px; }
+
+        .partidos-lista {
+            padding: 20px 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 16px;
+        }
+
+        .partido-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s;
+        }
+        .partido-card:hover { transform: translateY(-3px); border-color: #FFB400; }
+
+        .competicion {
+            font-size: 11px;
+            color: #FFB400;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .equipos {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .equipo { font-size: 16px; font-weight: 600; text-align: center; flex: 1; }
+        .vs { color: #555; font-size: 13px; margin: 0 10px; }
+
+        .estado {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .PENDIENTE { background: #1a3a5c; color: #4fc3f7; }
+        .EN_VIVO { background: #1a3a1a; color: #4caf50; }
+        .FINALIZADO { background: #2a2a2a; color: #999; }
+
+        .btn-prediccion {
+            width: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #FFB400;
+            border: 1px solid #FFB400;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-prediccion:hover { background: #FFB400; color: #000; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: #111;
+            border: 1px solid #FFB400;
+            border-radius: 12px;
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-title {
+            color: #FFB400;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .spinner {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+        .spinner::before {
+            content: "🤖";
+            display: block;
+            font-size: 40px;
+            margin-bottom: 12px;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .prediccion-texto {
+            background: #0d1117;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #e0e0e0;
+        }
+        .prediccion-texto strong { color: #FFB400; }
+        .btn-cerrar {
+            width: 100%;
+            background: #222;
+            color: #999;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+        .btn-cerrar:hover { background: #333; color: #fff; }
+        .ia-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <h1>🏆 CasaDeportiva</h1>
+    <div style="display:flex; gap:20px;">
+        <a href="/partidos.html" style="color:#FFB400; text-decoration:none; font-size:14px;">🏟️ Partidos</a>
+        <a href="/" style="color:#999; text-decoration:none; font-size:14px;">← Volver</a>
+    </div>
+</div>
+
+<div class="header-section">
+    <h2>🤖 Predicciones con Inteligencia Artificial</h2>
+    <p>Análisis generado por Gemini AI — Selecciona un partido para ver la predicción</p>
+</div>
+
+<div class="partidos-lista" id="partidos"></div>
+
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <div class="modal-title" id="modalTitulo"></div>
+        <div id="modalContenido">
+            <div class="spinner">Gemini AI está analizando el partido...</div>
+        </div>
+        <button class="btn-cerrar" onclick="cerrarModal()">Cerrar</button>
+    </div>
+</div>
+
+<script>
+    async function cargarPartidos() {
+        const res = await fetch('/api/partidos');
+        const partidos = await res.json();
+        const container = document.getElementById('partidos');
+        container.innerHTML = '';
+        partidos.forEach(p => {
+            container.innerHTML += `
+                <div class="partido-card">
+                    <div class="competicion">${p.competicion}</div>
+                    <div class="equipos">
+                        <div class="equipo">${p.equipoLocal}</div>
+                        <div class="vs">VS</div>
+                        <div class="equipo">${p.equipoVisitante}</div>
+                    </div>
+                    <div><span class="estado ${p.estado}">${p.estado.replace('_', ' ')}</span></div>
+                    <div><span class="ia-badge">✨ Gemini AI</span></div>
+                    <button class="btn-prediccion" onclick="verPrediccion(${p.id}, '${p.equipoLocal}', '${p.equipoVisitante}')">
+                        🔮 Ver Predicción IA
+                    </button>
+                </div>`;
+        });
+    }
+
+    async function verPrediccion(id, local, visitante) {
+        document.getElementById('modalTitulo').textContent = local + ' vs ' + visitante;
+        document.getElementById('modalContenido').innerHTML = '<div class="spinner">Gemini AI está analizando el partido...</div>';
+        document.getElementById('modal').style.display = 'flex';
+
+        try {
+            const res = await fetch(`/api/predicciones/${id}`);
+            const data = await res.json();
+            if (res.ok && data.texto && !data.texto.startsWith('Error')) {
+                const textoFormateado = data.texto
+                    .replace(/### (.*?)(\n|$)/g, '<br><strong>$1</strong><br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                    .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                    .replace(/\n/g, '<br>');
+                document.getElementById('modalContenido').innerHTML =
+                    `<div class="prediccion-texto">${textoFormateado}</div>`;
+            } else {
+                document.getElementById('modalContenido').innerHTML =
+                    `<div class="prediccion-texto" style="color:#f44336;">
+                        ⚠️ El servicio de IA no está disponible en este momento. Intenta más tarde.
+                    </div>`;
+            }
+        } catch (e) {
+            document.getElementById('modalContenido').innerHTML =
+                `<div class="prediccion-texto" style="color:#f44336;">Error de conexión</div>`;
+        }
+    }
+
+    function cerrarModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
+
+    cargarPartidos();
+</script>
+</body>
+</html>
