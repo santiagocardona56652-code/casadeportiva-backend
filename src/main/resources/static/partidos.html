@@ -5,7 +5,7 @@
     <title>CasaDeportiva - Partidos</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0a0a0a; font-family: 'Segoe UI', sans-serif; color: #fff; }
+        body { background: #0a0a0a; font-family: 'Segoe UI', sans-serif; color: #fff; padding-bottom: 90px; }
 
         .navbar {
             background: #111;
@@ -14,8 +14,49 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 2px solid #FFB400;
+            flex-wrap: wrap;
+            gap: 12px;
         }
         .navbar h1 { color: #FFB400; font-size: 22px; }
+        .navbar-right { display: flex; align-items: center; gap: 20px; }
+
+        .saldo-box {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .saldo-box .label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .saldo-box .valor { font-size: 16px; font-weight: 700; color: #4caf50; }
+
+        .nombre-usuario { color: #ccc; font-size: 13px; }
+        .nombre-usuario b { color: #FFB400; }
+
+        .btn-nav {
+            background: transparent;
+            border: 1px solid #444;
+            color: #ccc;
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-nav:hover { border-color: #FFB400; color: #FFB400; }
+
+        .btn-cerrar-sesion {
+            background: transparent;
+            border: 1px solid #444;
+            color: #888;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .btn-cerrar-sesion:hover { border-color: #f44336; color: #f44336; }
 
         .filtros {
             display: flex;
@@ -58,10 +99,11 @@
             border: 1px solid #222;
             border-radius: 12px;
             padding: 20px;
-            transition: transform 0.2s;
+            transition: transform 0.2s, border-color 0.2s;
         }
         .partido-card:hover { transform: translateY(-3px); border-color: #FFB400; }
         .partido-card.en-vivo { border-color: #4caf50; box-shadow: 0 0 12px rgba(76,175,80,0.2); }
+        .partido-card.en-canasta { border-color: #FFB400; box-shadow: 0 0 12px rgba(255,180,0,0.25); }
 
         .competicion {
             font-size: 11px;
@@ -121,6 +163,22 @@
 
         .fecha { font-size: 12px; color: #666; margin-bottom: 14px; }
 
+        .badge-en-canasta {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #2a2110;
+            color: #FFB400;
+            border: 1px solid #FFB400;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+
         .btn-apostar {
             width: 100%;
             background: #FFB400;
@@ -139,13 +197,180 @@
         .msg { margin-top: 10px; padding: 8px; border-radius: 6px; font-size: 13px; text-align: center; }
         .msg.success { background: #1a3a1a; color: #4caf50; }
         .msg.error { background: #3a1a1a; color: #f44336; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-box {
+            background: #111;
+            border: 1px solid #FFB400;
+            border-radius: 12px;
+            padding: 28px;
+            width: 380px;
+            max-width: 100%;
+        }
+        .modal-box h3 { color: #FFB400; margin-bottom: 18px; text-align: center; font-size: 17px; }
+        .modal-box label { color: #999; font-size: 12px; display: block; margin-bottom: 6px; text-transform: uppercase; }
+        .modal-box input {
+            width: 100%; background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
+            padding: 12px; color: #fff; font-size: 14px; outline: none; margin-bottom: 14px;
+        }
+        .modal-box input:focus { border-color: #FFB400; }
+
+        .opciones-resultado { display: flex; gap: 10px; margin-bottom: 16px; }
+        .opcion-btn {
+            flex: 1; border: 1px solid #333; border-radius: 8px;
+            padding: 10px; cursor: pointer; font-weight: 600; font-size: 13px;
+            background: #1a1a1a; color: #ccc; transition: all 0.2s;
+        }
+        .opcion-btn.LOCAL.selected { background: #1a3a5c; color: #4fc3f7; border-color: #4fc3f7; }
+        .opcion-btn.EMPATE.selected { background: #2a2a1a; color: #FFB400; border-color: #FFB400; }
+        .opcion-btn.VISITANTE.selected { background: #1a3a1a; color: #4caf50; border-color: #4caf50; }
+
+        .btn-secundario {
+            width: 100%; background: #222; color: #999; border: none; border-radius: 8px;
+            padding: 11px; cursor: pointer; margin-top: 8px; font-size: 13px;
+        }
+        .btn-secundario:hover { background: #2a2a2a; color: #ccc; }
+
+        .btn-primario {
+            width: 100%; background: #FFB400; color: #000; border: none; border-radius: 8px;
+            padding: 12px; cursor: pointer; font-weight: 700; font-size: 14px;
+        }
+        .btn-primario:hover { background: #e6a200; }
+        .btn-primario:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+        .canasta-fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #FFB400;
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            padding: 14px 22px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255,180,0,0.4);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 900;
+            transition: transform 0.2s;
+        }
+        .canasta-fab:hover { transform: scale(1.05); }
+        .canasta-fab .contador {
+            background: #000;
+            color: #FFB400;
+            border-radius: 50%;
+            width: 22px; height: 22px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px;
+        }
+
+        .canasta-panel {
+            display: none;
+            position: fixed;
+            top: 0; right: 0;
+            width: 380px;
+            max-width: 100%;
+            height: 100%;
+            background: #0d0d0d;
+            border-left: 1px solid #333;
+            z-index: 1100;
+            flex-direction: column;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.5);
+        }
+        .canasta-header {
+            padding: 20px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .canasta-header h2 { color: #FFB400; font-size: 18px; }
+        .canasta-header .close-btn {
+            background: none; border: none; color: #888; font-size: 22px; cursor: pointer;
+        }
+
+        .canasta-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+        .canasta-item {
+            background: #151515;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .canasta-item .partido-nombre { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+        .canasta-item .competicion-mini { font-size: 10px; color: #FFB400; text-transform: uppercase; margin-bottom: 8px; }
+        .canasta-item .resultado-elegido {
+            display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 8px;
+            font-weight: 600; margin-bottom: 10px;
+        }
+        .canasta-item .resultado-elegido.LOCAL { background: #1a3a5c; color: #4fc3f7; }
+        .canasta-item .resultado-elegido.EMPATE { background: #2a2a1a; color: #FFB400; }
+        .canasta-item .resultado-elegido.VISITANTE { background: #1a3a1a; color: #4caf50; }
+
+        .canasta-item .monto-row {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .canasta-item input {
+            flex: 1; background: #0a0a0a; border: 1px solid #333; border-radius: 6px;
+            padding: 8px 10px; color: #fff; font-size: 13px; outline: none;
+        }
+        .canasta-item input:focus { border-color: #FFB400; }
+        .canasta-item .quitar-btn {
+            background: none; border: none; color: #666; cursor: pointer;
+            font-size: 16px; position: absolute; top: 10px; right: 10px;
+        }
+        .canasta-item .quitar-btn:hover { color: #f44336; }
+
+        .canasta-empty {
+            color: #555; text-align: center; padding: 60px 20px; font-size: 13px;
+        }
+
+        .canasta-footer {
+            border-top: 1px solid #222;
+            padding: 18px 20px;
+        }
+        .resumen-row {
+            display: flex; justify-content: space-between; font-size: 13px; color: #999; margin-bottom: 8px;
+        }
+        .resumen-row.total { font-size: 16px; font-weight: 700; color: #fff; margin-top: 10px; padding-top: 10px; border-top: 1px solid #222; }
+        .resumen-row .valor { color: #FFB400; font-weight: 700; }
+        .resumen-row.total .valor { color: #4caf50; }
+
+        #canastaMsg { margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="navbar">
     <h1>🏆 CasaDeportiva</h1>
-    <span><a href="/" style="color:#FFB400; text-decoration:none;">← Volver</a></span>
+    <div class="navbar-right">
+        <span class="nombre-usuario">👋 <b id="navNombre">Usuario</b></span>
+        <div class="saldo-box">
+            <span class="label">Saldo</span>
+            <span class="valor" id="navSaldo">$0</span>
+        </div>
+        <button class="btn-nav" onclick="window.location.href='/misapuestas.html'">🎫 Mis apuestas</button>
+        <button class="btn-nav" onclick="window.location.href='/predicciones.html'">🔮 Predicciones IA</button>
+        <button class="btn-cerrar-sesion" onclick="cerrarSesion()">Salir</button>
+    </div>
 </div>
 
 <div class="filtros">
@@ -158,40 +383,100 @@
 
 <div class="partidos-grid" id="partidos"></div>
 
-<!-- MODAL APUESTA -->
-<div id="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-     background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:#111; border:1px solid #FFB400; border-radius:12px; padding:30px; width:380px;">
-        <h3 style="color:#FFB400; margin-bottom:20px; text-align:center;" id="modalTitulo"></h3>
-        <div style="margin-bottom:16px;">
-            <label style="color:#999; font-size:12px; display:block; margin-bottom:6px;">MONTO A APOSTAR ($)</label>
-            <input id="montoInput" type="number" placeholder="Ej: 10000"
-                style="width:100%; background:#1a1a1a; border:1px solid #333; border-radius:8px;
-                       padding:12px; color:#fff; font-size:14px; outline:none;">
+<div id="modal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 id="modalTitulo"></h3>
+        <label>¿Quién gana?</label>
+        <div class="opciones-resultado" id="opcionesResultado">
+            <button class="opcion-btn LOCAL" onclick="seleccionarResultado('LOCAL', this)">Local</button>
+            <button class="opcion-btn EMPATE" onclick="seleccionarResultado('EMPATE', this)">Empate</button>
+            <button class="opcion-btn VISITANTE" onclick="seleccionarResultado('VISITANTE', this)">Visitante</button>
         </div>
-        <p style="color:#999; font-size:13px; margin-bottom:12px; text-align:center;">¿Quién gana?</p>
-        <div style="display:flex; gap:10px; margin-bottom:16px;">
-            <button onclick="confirmarApuesta('LOCAL')"
-                style="flex:1; background:#1a3a5c; color:#4fc3f7; border:none; border-radius:8px;
-                       padding:10px; cursor:pointer; font-weight:600;">Local</button>
-            <button onclick="confirmarApuesta('EMPATE')"
-                style="flex:1; background:#2a2a1a; color:#FFB400; border:none; border-radius:8px;
-                       padding:10px; cursor:pointer; font-weight:600;">Empate</button>
-            <button onclick="confirmarApuesta('VISITANTE')"
-                style="flex:1; background:#1a3a1a; color:#4caf50; border:none; border-radius:8px;
-                       padding:10px; cursor:pointer; font-weight:600;">Visitante</button>
+        <label>Monto a apostar ($)</label>
+        <input id="montoInput" type="number" placeholder="Ej: 10000">
+        <div id="modalMsg" class="msg" style="display:none;"></div>
+        <button class="btn-primario" onclick="agregarACanasta()">🧺 Agregar a la canasta</button>
+        <button class="btn-secundario" onclick="cerrarModal()">Cancelar</button>
+    </div>
+</div>
+
+<button class="canasta-fab" id="canastaFab" onclick="abrirCanasta()">
+    🧺 Mi canasta <span class="contador" id="canastaContador">0</span>
+</button>
+
+<div class="canasta-panel" id="canastaPanel">
+    <div class="canasta-header">
+        <h2>🧺 Mi canasta de apuestas</h2>
+        <button class="close-btn" onclick="cerrarCanasta()">✕</button>
+    </div>
+    <div class="canasta-items" id="canastaItems"></div>
+    <div class="canasta-footer">
+        <div id="canastaMsg" class="msg" style="display:none;"></div>
+        <div class="resumen-row">
+            <span>Apuestas en canasta</span>
+            <span class="valor" id="resumenCantidad">0</span>
         </div>
-        <div id="modalMsg" class="msg"></div>
-        <button onclick="cerrarModal()"
-            style="width:100%; background:#222; color:#999; border:none; border-radius:8px;
-                   padding:10px; cursor:pointer; margin-top:8px;">Cancelar</button>
+        <div class="resumen-row">
+            <span>Saldo disponible</span>
+            <span class="valor" id="resumenSaldo">$0</span>
+        </div>
+        <div class="resumen-row total">
+            <span>Subtotal a apostar</span>
+            <span class="valor" id="resumenSubtotal">$0</span>
+        </div>
+        <button class="btn-primario" id="btnConfirmarTodas" onclick="confirmarTodasLasApuestas()" style="margin-top:14px;">
+            ✅ Confirmar todas las apuestas
+        </button>
     </div>
 </div>
 
 <script>
     let todosLosPartidos = [];
     let partidoSeleccionado = null;
+    let resultadoSeleccionado = null;
     let filtroActual = 'TODOS';
+    let canasta = [];
+
+    const usuarioId = sessionStorage.getItem('usuarioId');
+    const token      = sessionStorage.getItem('token');
+    let saldoActual  = parseFloat(sessionStorage.getItem('saldo') || '0');
+
+    function inicializarSesion() {
+        if (!usuarioId || !token) { window.location.href = '/'; return; }
+        document.getElementById('navNombre').textContent = sessionStorage.getItem('nombre') || 'Usuario';
+        actualizarSaldoUI();
+    }
+
+    function actualizarSaldoUI() {
+        document.getElementById('navSaldo').textContent = formatearMoneda(saldoActual);
+        document.getElementById('resumenSaldo').textContent = formatearMoneda(saldoActual);
+    }
+
+    function cerrarSesion() {
+        sessionStorage.clear();
+        window.location.href = '/';
+    }
+
+    function formatearMoneda(valor) {
+        return '$' + Number(valor).toLocaleString('es-CO');
+    }
+
+    function formatearFecha(fechaStr) {
+        try {
+            if (!fechaStr) return 'Fecha no disponible';
+            const d = new Date(fechaStr);
+            if (isNaN(d.getTime())) return 'Fecha no disponible';
+            return d.toLocaleDateString('es-CO', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (e) {
+            return 'Fecha no disponible';
+        }
+    }
 
     async function cargarPartidos() {
         const res = await fetch('/api/partidos');
@@ -214,12 +499,11 @@
             return;
         }
         partidos.forEach(p => {
-            const fecha = new Date(p.fecha).toLocaleDateString('es-CO', {
-                weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-            });
+            const fecha = formatearFecha(p.fecha);
             const puedaApostar = p.estado === 'PENDIENTE';
             const enVivo = p.estado === 'EN_VIVO';
             const finalizado = p.estado === 'FINALIZADO';
+            const enCanasta = canasta.find(item => item.partidoId === p.id);
 
             const marcadorHTML = (enVivo || finalizado)
                 ? `<div class="marcador">
@@ -229,8 +513,12 @@
                    </div>`
                 : `<div class="marcador-pendiente">⏰ Próximamente</div>`;
 
+            const badgeCanasta = enCanasta
+                ? `<div class="badge-en-canasta">🧺 En canasta — ${enCanasta.resultado} — ${formatearMoneda(enCanasta.monto)}</div>`
+                : '';
+
             container.innerHTML += `
-                <div class="partido-card ${enVivo ? 'en-vivo' : ''}">
+                <div class="partido-card ${enVivo ? 'en-vivo' : ''} ${enCanasta ? 'en-canasta' : ''}">
                     <div class="competicion">${p.competicion}</div>
                     <div class="equipos">
                         <div class="equipo">${p.equipoLocal}</div>
@@ -239,9 +527,10 @@
                     ${marcadorHTML}
                     <div><span class="estado ${p.estado}">${enVivo ? '🔴 EN VIVO' : p.estado.replace('_', ' ')}</span></div>
                     <div class="fecha">📅 ${fecha}</div>
+                    ${badgeCanasta}
                     <button class="btn-apostar" ${!puedaApostar ? 'disabled' : ''}
-                        onclick="apostar(${p.id}, '${p.equipoLocal}', '${p.equipoVisitante}')">
-                        ${puedaApostar ? '💰 Apostar' : enVivo ? '🔴 En curso' : '✅ Finalizado'}
+                        onclick="apostar(${p.id}, '${p.equipoLocal.replace(/'/g, "\\'")}', '${p.equipoVisitante.replace(/'/g, "\\'")}', '${p.competicion.replace(/'/g, "\\'")}')">
+                        ${puedaApostar ? (enCanasta ? '✏️ Editar apuesta' : '💰 Apostar') : enVivo ? '🔴 En curso' : '✅ Finalizado'}
                     </button>
                 </div>`;
         });
@@ -254,54 +543,239 @@
         aplicarFiltro();
     }
 
-    function apostar(id, local, visitante) {
-        partidoSeleccionado = { id, local, visitante };
+    function apostar(id, local, visitante, competicion) {
+        partidoSeleccionado = { id, local, visitante, competicion };
+        resultadoSeleccionado = null;
         document.getElementById('modalTitulo').textContent = local + ' vs ' + visitante;
+        document.querySelectorAll('.opcion-btn').forEach(b => b.classList.remove('selected'));
+        document.getElementById('modalMsg').style.display = 'none';
+
+        const existente = canasta.find(item => item.partidoId === id);
+        if (existente) {
+            document.getElementById('montoInput').value = existente.monto;
+            resultadoSeleccionado = existente.resultado;
+            document.querySelector('.opcion-btn.' + existente.resultado).classList.add('selected');
+        } else {
+            document.getElementById('montoInput').value = '';
+        }
+
         document.getElementById('modal').style.display = 'flex';
+    }
+
+    function seleccionarResultado(resultado, btn) {
+        resultadoSeleccionado = resultado;
+        document.querySelectorAll('.opcion-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
     }
 
     function cerrarModal() {
         document.getElementById('modal').style.display = 'none';
-        document.getElementById('montoInput').value = '';
-        document.getElementById('modalMsg').className = 'msg';
-        document.getElementById('modalMsg').textContent = '';
+        partidoSeleccionado = null;
+        resultadoSeleccionado = null;
     }
 
-    async function confirmarApuesta(prediccion) {
-        const monto = document.getElementById('montoInput').value;
+    function mostrarMsgModal(texto, tipo) {
         const msg = document.getElementById('modalMsg');
-        if (!monto || monto <= 0) {
-            msg.className = 'msg error';
-            msg.textContent = 'Ingresa un monto válido';
+        msg.className = 'msg ' + tipo;
+        msg.style.display = 'block';
+        msg.textContent = texto;
+    }
+
+    function agregarACanasta() {
+        const monto = parseFloat(document.getElementById('montoInput').value);
+
+        if (!resultadoSeleccionado) {
+            mostrarMsgModal('Selecciona quién gana (Local, Empate o Visitante)', 'error');
             return;
         }
-        try {
-            const res = await fetch('/api/apuestas', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    usuarioId: 1,
-                    partidoId: partidoSeleccionado.id,
-                    monto: parseFloat(monto),
-                    prediccion: prediccion
-                })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                msg.className = 'msg success';
-                msg.textContent = '✅ Apuesta registrada por $' + monto;
-                setTimeout(cerrarModal, 2000);
-            } else {
-                msg.className = 'msg error';
-                msg.textContent = data;
-            }
-        } catch (e) {
-            msg.className = 'msg error';
-            msg.textContent = 'Error de conexión';
+        if (!monto || monto <= 0) {
+            mostrarMsgModal('Ingresa un monto válido', 'error');
+            return;
+        }
+
+        const totalEnCanastaSinEste = canasta
+            .filter(item => item.partidoId !== partidoSeleccionado.id)
+            .reduce((sum, item) => sum + item.monto, 0);
+
+        if (totalEnCanastaSinEste + monto > saldoActual) {
+            mostrarMsgModal('El monto supera tu saldo disponible (' + formatearMoneda(saldoActual) + ')', 'error');
+            return;
+        }
+
+        const idx = canasta.findIndex(item => item.partidoId === partidoSeleccionado.id);
+        const item = {
+            partidoId: partidoSeleccionado.id,
+            local: partidoSeleccionado.local,
+            visitante: partidoSeleccionado.visitante,
+            competicion: partidoSeleccionado.competicion,
+            resultado: resultadoSeleccionado,
+            monto: monto
+        };
+        if (idx >= 0) canasta[idx] = item;
+        else canasta.push(item);
+
+        guardarCanastaLocal();
+        actualizarCanastaUI();
+        aplicarFiltro();
+        cerrarModal();
+        abrirCanasta();
+    }
+
+    function quitarDeCanasta(partidoId) {
+        canasta = canasta.filter(item => item.partidoId !== partidoId);
+        guardarCanastaLocal();
+        actualizarCanastaUI();
+        aplicarFiltro();
+    }
+
+    function actualizarMontoCanasta(partidoId, nuevoMonto) {
+        const item = canasta.find(i => i.partidoId === partidoId);
+        if (item) {
+            item.monto = parseFloat(nuevoMonto) || 0;
+            guardarCanastaLocal();
+            actualizarResumen();
         }
     }
 
-    // Cargar al inicio y actualizar cada 60 segundos
+    function guardarCanastaLocal() {
+        sessionStorage.setItem('canasta', JSON.stringify(canasta));
+    }
+
+    function cargarCanastaLocal() {
+        const guardada = sessionStorage.getItem('canasta');
+        if (guardada) {
+            try { canasta = JSON.parse(guardada); } catch (e) { canasta = []; }
+        }
+    }
+
+    function actualizarCanastaUI() {
+        const fab = document.getElementById('canastaFab');
+        const contador = document.getElementById('canastaContador');
+        contador.textContent = canasta.length;
+        fab.style.display = canasta.length > 0 ? 'flex' : 'none';
+
+        const itemsContainer = document.getElementById('canastaItems');
+        itemsContainer.innerHTML = '';
+
+        if (canasta.length === 0) {
+            itemsContainer.innerHTML = '<div class="canasta-empty">Tu canasta está vacía.<br>Elige un partido y agrega tu apuesta 🎯</div>';
+        } else {
+            canasta.forEach(item => {
+                itemsContainer.innerHTML += `
+                    <div class="canasta-item">
+                        <button class="quitar-btn" onclick="quitarDeCanasta(${item.partidoId})">✕</button>
+                        <div class="competicion-mini">${item.competicion}</div>
+                        <div class="partido-nombre">${item.local} vs ${item.visitante}</div>
+                        <span class="resultado-elegido ${item.resultado}">${item.resultado}</span>
+                        <div class="monto-row">
+                            <span style="color:#666; font-size:12px;">$</span>
+                            <input type="number" value="${item.monto}"
+                                onchange="actualizarMontoCanasta(${item.partidoId}, this.value)">
+                        </div>
+                    </div>`;
+            });
+        }
+        actualizarResumen();
+    }
+
+    function actualizarResumen() {
+        const subtotal = canasta.reduce((sum, item) => sum + (item.monto || 0), 0);
+        document.getElementById('resumenCantidad').textContent = canasta.length;
+        document.getElementById('resumenSubtotal').textContent = formatearMoneda(subtotal);
+        document.getElementById('resumenSaldo').textContent = formatearMoneda(saldoActual);
+
+        const btn = document.getElementById('btnConfirmarTodas');
+        btn.disabled = canasta.length === 0 || subtotal > saldoActual || subtotal <= 0;
+    }
+
+    function abrirCanasta() {
+        document.getElementById('canastaPanel').style.display = 'flex';
+        actualizarCanastaUI();
+    }
+
+    function cerrarCanasta() {
+        document.getElementById('canastaPanel').style.display = 'none';
+    }
+
+    function mostrarMsgCanasta(texto, tipo) {
+        const msg = document.getElementById('canastaMsg');
+        msg.className = 'msg ' + tipo;
+        msg.style.display = 'block';
+        msg.textContent = texto;
+        setTimeout(() => { msg.style.display = 'none'; }, 4000);
+    }
+
+    async function confirmarTodasLasApuestas() {
+        if (canasta.length === 0) return;
+
+        const subtotal = canasta.reduce((sum, item) => sum + item.monto, 0);
+        if (subtotal > saldoActual) {
+            mostrarMsgCanasta('El subtotal supera tu saldo disponible', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btnConfirmarTodas');
+        btn.disabled = true;
+        btn.textContent = 'Procesando...';
+
+        let exitosas = 0;
+        let fallidas = [];
+        let ultimoId = null;
+
+        for (const item of canasta) {
+            try {
+                const res = await fetch('/api/apuestas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({
+                        usuarioId: parseInt(usuarioId),
+                        partidoId: item.partidoId,
+                        monto: item.monto,
+                        prediccion: item.resultado
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    ultimoId = data.id;
+                    exitosas++;
+                    saldoActual -= item.monto;
+                } else {
+                    fallidas.push(item.local + ' vs ' + item.visitante);
+                }
+            } catch (e) {
+                fallidas.push(item.local + ' vs ' + item.visitante);
+            }
+        }
+
+        sessionStorage.setItem('saldo', saldoActual);
+        actualizarSaldoUI();
+
+        if (fallidas.length === 0) {
+            if (ultimoId) sessionStorage.setItem('ultimaApuestaId', ultimoId);
+            mostrarMsgCanasta('✅ ' + exitosas + ' apuesta(s) registradas con éxito', 'success');
+            canasta = [];
+            guardarCanastaLocal();
+            setTimeout(() => {
+                cerrarCanasta();
+                window.location.href = '/misapuestas.html';
+            }, 1500);
+        } else {
+            mostrarMsgCanasta('⚠️ ' + exitosas + ' OK, fallaron: ' + fallidas.join(', '), 'error');
+            canasta = canasta.filter(item => fallidas.includes(item.local + ' vs ' + item.visitante));
+            guardarCanastaLocal();
+        }
+
+        actualizarCanastaUI();
+        btn.disabled = false;
+        btn.textContent = '✅ Confirmar todas las apuestas';
+    }
+
+    inicializarSesion();
+    cargarCanastaLocal();
+    actualizarCanastaUI();
     cargarPartidos();
     setInterval(cargarPartidos, 60000);
 </script>

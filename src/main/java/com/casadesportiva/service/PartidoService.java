@@ -1,6 +1,7 @@
 package com.casadesportiva.service;
 
 import com.casadesportiva.model.Partido;
+import com.casadesportiva.repository.ApuestaRepository;
 import com.casadesportiva.repository.PartidoRepository;
 import com.casadesportiva.repository.PrediccionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ public class PartidoService {
     @Autowired
     private PrediccionRepository prediccionRepository;
 
+    @Autowired
+    private ApuestaRepository apuestaRepository;
+
     public List<Partido> obtenerTodos() {
         return partidoRepository.findAll();
     }
@@ -35,6 +39,7 @@ public class PartidoService {
     public void actualizarPartidos() {
         try {
             RestTemplate restTemplate = new RestTemplate();
+            apuestaRepository.deleteAll();
             prediccionRepository.deleteAll();
             partidoRepository.deleteAll();
 

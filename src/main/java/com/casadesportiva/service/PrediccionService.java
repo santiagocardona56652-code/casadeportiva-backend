@@ -5,6 +5,7 @@ import com.casadesportiva.model.Prediccion;
 import com.casadesportiva.repository.PartidoRepository;
 import com.casadesportiva.repository.PrediccionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
@@ -23,7 +24,8 @@ public class PrediccionService {
     @Autowired
     private PartidoRepository partidoRepository;
 
-    private String geminiApiKey = "AIzaSyCpUK1SDKEN8cLgyXvRwrjHghmBpkx6K8g";
+    @Value("${groq.api.key}")
+    private String groqApiKey;
 
     public Prediccion obtenerPrediccion(Long partidoId) {
         Optional<Prediccion> cached = prediccionRepository.findByPartidoId(partidoId);
@@ -38,7 +40,7 @@ public class PrediccionService {
         Partido partido = partidoRepository.findById(partidoId)
             .orElseThrow(() -> new RuntimeException("Partido no encontrado"));
 
-        String texto = llamarGemini(partido);
+        String texto = llamarGroq(partido);
 
         Prediccion prediccion = new Prediccion();
         prediccion.setPartido(partido);
@@ -48,60 +50,68 @@ public class PrediccionService {
         return prediccionRepository.save(prediccion);
     }
 
-    private String llamarGemini(Partido partido) {
-        System.out.println("KEY USADA: " + geminiApiKey);
+    private String llamarGroq(Partido partido) {
+        System.out.println("Llamando a Groq...");
 
         try {
-            String url ="https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key="+ geminiApiKey;
+            String url = "https://api.groq.com/openai/v1/chat/completions";
 
             String prompt = String.format(
                 "Eres un analista experto en futbol. Analiza este partido: %s vs %s. Competicion: %s. Fecha: %s. " +
-                "Proporciona prediccion del resultado, marcador probable, probabilidades y nivel de confianza en espanol. " +
-                "IMPORTANTE: Responde en TEXTO PLANO sin usar markdown (no uses #, **, *, guiones para listas). " +
-                "Usa mayusculas para titulos y saltos de linea simples para organizar las secciones." + "Tambien coloca en Negrilla los titulos y emoji para que sea mas atractivo." + "Muestrame tambien el sigo de porcentaje.",
-            partido.getEquipoLocal(),
-            partido.getEquipoVisitante(),
-            partido.getCompeticion(),
-            partido.getFecha()
+                "Dame una PREDICCION DETALLADA con lo siguiente: " +
+                "1. RESULTADO FINAL PROBABLE: como terminaria el partido y quien ganaria. " +
+                "2. MARCADOR EXACTO: el marcador mas probable al final del partido. " +
+                "3. PROBABILIDADES: porcentaje de victoria local, empate y victoria visitante. " +
+                "4. JUGADORES CLAVE: quienes pueden marcar la diferencia o anotar. " +
+                "5. NIVEL DE CONFIANZA: que tan segura es esta prediccion. " +
+                "Responde en TEXTO PLANO sin markdown (sin #, **, *, guiones). " +
+                "Usa MAYUSCULAS para los titulos de cada seccion, emojis para hacerlo atractivo y saltos de linea entre secciones.",
+                partido.getEquipoLocal(),
+                partido.getEquipoVisitante(),
+                partido.getCompeticion(),
+                partido.getFecha()
             );
 
-            Map<String, Object> part = new HashMap<>();
-            part.put("text", prompt);
+            Map<String, Object> systemMessage = new HashMap<>();
+            systemMessage.put("role", "system");
+            systemMessage.put("content", "Eres un analista experto en futbol que da predicciones detalladas en español sobre como terminaran los partidos.");
 
-            Map<String, Object> content = new HashMap<>();
-            content.put("parts", List.of(part));
+            Map<String, Object> userMessage = new HashMap<>();
+            userMessage.put("role", "user");
+            userMessage.put("content", prompt);
 
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("contents", List.of(content));
+            requestBody.put("model", "llama-3.3-70b-versatile");
+            requestBody.put("messages", List.of(systemMessage, userMessage));
+            requestBody.put("max_tokens", 1024);
+            requestBody.put("temperature", 0.7);
 
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + groqApiKey);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
-            System.out.println("Status Gemini: " + response.getStatusCode());
+            System.out.println("Status Groq: " + response.getStatusCode());
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                List candidates = (List) response.getBody().get("candidates");
-                if (candidates != null && !candidates.isEmpty()) {
-                    Map candidate = (Map) candidates.get(0);
-                    Map contentResp = (Map) candidate.get("content");
-                    List parts = (List) contentResp.get("parts");
-                    Map firstPart = (Map) parts.get(0);
-                    return (String) firstPart.get("text");
+                List choices = (List) response.getBody().get("choices");
+                if (choices != null && !choices.isEmpty()) {
+                    Map choice = (Map) choices.get(0);
+                    Map message = (Map) choice.get("message");
+                    return (String) message.get("content");
                 }
             }
             return generarPrediccionLocal(partido);
 
         } catch (Exception e) {
-    System.out.println("========== ERROR GEMINI ==========");
-    e.printStackTrace();
-    System.out.println("==================================");
-
-    return generarPrediccionLocal(partido);
-         }
+            System.out.println("========== ERROR GROQ ==========");
+            e.printStackTrace();
+            System.out.println("================================");
+            return generarPrediccionLocal(partido);
+        }
     }
 
     private String generarPrediccionLocal(Partido partido) {
